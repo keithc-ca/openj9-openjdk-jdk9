@@ -25,11 +25,11 @@ CLEAN_DIRS += vm
 	#
 
 j9vm-build :
-	+($(CD) $(SRC_ROOT)/closed && $(MAKE) -f OpenJ9.gmk SPEC=$(SPEC) VERSION_MAJOR=$(VERSION_MAJOR) build-j9)
+	+$(MAKE) -C $(SRC_ROOT)/closed -f OpenJ9.gmk SPEC=$(SPEC) VERSION_MAJOR=$(VERSION_MAJOR) build-j9
 
 j9vm-compose-buildjvm : j9vm-build
 ifeq ($(OPENJDK_BUILD_CPU),$(OPENJDK_TARGET_CPU))
-	+($(CD) $(SRC_ROOT)/closed && $(MAKE) -f OpenJ9.gmk SPEC=$(SPEC) stage_openj9_build_jdk)
+	+$(MAKE) -C $(SRC_ROOT)/closed -f OpenJ9.gmk SPEC=$(SPEC) stage_openj9_build_jdk
 else
 	@$(ECHO) Cross compile detected, skipping stage_openj9_build_jdk
 endif
@@ -37,10 +37,10 @@ endif
 product-images : openj9-jdk-image openj9-jre-image
 
 openj9-jdk-image : jdk-image j9vm-build
-	+($(CD) $(SRC_ROOT)/closed && $(MAKE) -f OpenJ9.gmk SPEC=$(SPEC) stage_openj9_jdk_image)
+	+$(MAKE) -C $(SRC_ROOT)/closed -f OpenJ9.gmk SPEC=$(SPEC) stage_openj9_jdk_image
 
 openj9-jre-image : jre-image j9vm-build
-	+($(CD) $(SRC_ROOT)/closed && $(MAKE) -f OpenJ9.gmk SPEC=$(SPEC) stage_openj9_jre_image)
+	+$(MAKE) -C $(SRC_ROOT)/closed -f OpenJ9.gmk SPEC=$(SPEC) stage_openj9_jre_image
 
 ifeq (true,$(OPENJ9_ENABLE_DDR))
 

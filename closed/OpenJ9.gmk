@@ -112,8 +112,13 @@ OPENJ9_REDIRECTOR := redirector/$(LIBRARY_PREFIX)jvm_b156$(SHARED_LIBRARY_SUFFIX
 
 MODULES_LIBS_DIR := $(OUTPUT_ROOT)/support/modules_libs
 
-# openjdk makeflags don't work with openj9/omr native compiles; override with number of CPUs which openj9 and omr need supplied
-override MAKEFLAGS := -j $(JOBS)
+# Remove '-r' and '-R' from MAKEFLAGS as OpenJ9 makefiles depend upon built-in
+# rules and variables. Also remove '-s' to avoid suppressing anticipated output.
+# These options appear as single characters in the first word of MAKEFLAGS.
+override MAKEFLAGS := $(strip \
+	$(subst r,,$(subst R,,$(subst s,,$(firstword $(MAKEFLAGS))))) \
+	$(wordlist 2,$(words $(MAKEFLAGS)),$(MAKEFLAGS)) \
+	-j $(JOBS))
 
 # honour the --disable-warnings-as-errors configure parameter during compilation of OMR
 ifeq (false,$(WARNINGS_AS_ERRORS))
@@ -314,7 +319,7 @@ stage-openj9-tools :
 
 build-openj9-tools : stage-openj9-tools
 	@$(ECHO) Building OpenJ9 tools
-	($(MAKE) $(MAKEFLAGS) -C $(OUTPUT_ROOT)/vm/sourcetools -f buildj9tools.mk \
+	($(MAKE) -C $(OUTPUT_ROOT)/vm/sourcetools -f buildj9tools.mk \
 		JAVA_HOME=$(BOOT_JDK) lib/jpp.jar \
 	)
 
@@ -374,7 +379,7 @@ run-preprocessors-j9 : stage-j9 \
 	@$(ECHO) Running OpenJ9 preprocessors with OPENJ9_BUILDSPEC: $(OPENJ9_BUILDSPEC)
 	(export BOOT_JDK=$(BOOT_JDK) $(EXPORT_MSVS_ENV_VARS) \
 		&& cd $(OUTPUT_ROOT)/vm \
-		&& $(MAKE) $(MAKEFLAGS) -f buildtools.mk \
+		&& $(MAKE) -f buildtools.mk \
 			BUILD_ID=$(BUILD_ID) \
 			CMAKE=$(CMAKE) $(if $(findstring true,$(OPENJ9_ENABLE_CMAKE)),ENABLE_CMAKE=true CALLED_BY_SOURCE_ZIP=yes) \
 			EXTRA_CONFIGURE_ARGS=$(OMR_EXTRA_CONFIGURE_ARGS) \
@@ -393,12 +398,12 @@ build-j9 : run-preprocessors-j9
 ifeq (true,$(OPENJ9_ENABLE_CMAKE))
 	(export OPENJ9_BUILD=true $(EXPORT_MSVS_ENV_VARS) \
 		&& cd $(OUTPUT_ROOT)/vm/build \
-		&& $(MAKE) $(MAKEFLAGS) install \
+		&& $(MAKE) install \
 	)
 else
 	(export OPENJ9_BUILD=true $(EXPORT_NO_USE_MINGW) $(EXPORT_MSVS_ENV_VARS) \
 		&& cd $(OUTPUT_ROOT)/vm \
-		&& $(MAKE) $(MAKEFLAGS) all \
+		&& $(MAKE) all \
 	)
 endif
 	@$(ECHO) OpenJ9 compile complete
